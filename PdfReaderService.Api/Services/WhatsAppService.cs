@@ -1,0 +1,92 @@
+﻿using System.Text;
+using System.Text.Json;
+
+namespace PdfReaderService.Api.Services
+{
+    public class WhatsAppService : IWhatsAppService
+    {
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<WhatsAppService> _logger;
+
+        public WhatsAppService(HttpClient httpClient, IConfiguration configuration, ILogger<WhatsAppService> logger)
+        {
+            _httpClient = httpClient;
+            _configuration = configuration;
+            _logger = logger;
+        }
+
+        public async Task<bool> SendImageAsync(byte[] imageData, string caption)
+        {
+            try
+            {
+                var whatsappEndpoint = _configuration["WhatsApp:SendImageEndpoint"];
+                var recipientNumber = _configuration["WhatsApp:RecipientNumber"];
+
+                var payload = new
+                {
+                    RecipientNumber = recipientNumber,
+                    Image = Convert.ToBase64String(imageData),
+                    Caption = caption
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(whatsappEndpoint, content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Imagen enviada correctamente por WhatsApp");
+                    return true;
+                }
+                else
+                {
+                    _logger.LogError("Error al enviar imagen por WhatsApp. Status: {StatusCode}", response.StatusCode);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ExcepciÃ³n al enviar imagen por WhatsApp");
+                return false;
+            }
+        }
+
+        public async Task<bool> SendTextAsync(string message)
+        {
+            try
+            {
+                var whatsappEndpoint = _configuration["WhatsApp:SendTextEndpoint"];
+                var recipientNumber = _configuration["WhatsApp:RecipientNumber"];
+
+                var payload = new
+                {
+                    RecipientNumber = recipientNumber,
+                    Message = message
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync(whatsappEndpoint, content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Mensaje de texto enviado correctamente por WhatsApp");
+                    return true;
+                }
+                else
+                {
+                    _logger.LogError("Error al enviar mensaje de texto por WhatsApp. Status: {StatusCode}", response.StatusCode);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ExcepciÃ³n al enviar mensaje de texto por WhatsApp");
+                return false;
+            }
+        }
+    }
+}
