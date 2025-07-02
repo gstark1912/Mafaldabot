@@ -10,7 +10,7 @@ namespace PdfReaderService.Api.Models
         public string Id { get; set; }
 
         [BsonElement("runTimeOfDay")]
-        public TimeOnly RunTimeOfDay { get; set; }
+        public string RunTimeOfDay { get; set; }
 
         [BsonElement("lastRunDateTime")]
         public DateTime LastRunDateTime { get; set; }

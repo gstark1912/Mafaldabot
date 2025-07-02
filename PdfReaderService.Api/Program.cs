@@ -29,6 +29,7 @@ builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<IReadingService, ReadingService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
 
 // Logging
 builder.Services.AddLogging(builder => builder.AddConsole());

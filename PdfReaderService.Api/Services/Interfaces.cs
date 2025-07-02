@@ -8,7 +8,7 @@
 
     public interface IPdfService
     {
-        Task<byte[]> GetPageImageAsync(string filePath, int pageNumber);
+        byte[] GetPageImageAsync(string filePath, int pageNumber);
         Task<int> GetTotalPagesAsync(string filePath);
     }
 
@@ -16,5 +16,10 @@
     {
         Task<bool> SendImageAsync(byte[] imageData, string caption);
         Task<bool> SendTextAsync(string message);
+    }
+
+    public interface IImageUploadService
+    {
+        Task<string> UploadImageAsync(byte[] imageData);
     }
 }

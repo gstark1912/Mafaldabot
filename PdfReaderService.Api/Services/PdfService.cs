@@ -13,7 +13,7 @@ namespace PdfReaderService.Api.Services
             _logger = logger;
         }
 
-        public async Task<byte[]> GetPageImageAsync(string filePath, int pageNumber)
+        public byte[] GetPageImageAsync(string filePath, int pageNumber)
         {
             try
             {
@@ -23,30 +23,29 @@ namespace PdfReaderService.Api.Services
                     return null;
                 }
 
-                return await Task.Run(() =>
-                {
-                    using var document = PdfDocument.Load(filePath);
-                    
-                    if (pageNumber >= document.PageCount)
-                    {
-                        _logger.LogWarning("NÃºmero de pÃ¡gina {PageNumber} excede el total de pÃ¡ginas {TotalPages}", 
-                            pageNumber, document.PageCount);
-                        return null;
-                    }
-
-                    using var image = document.Render(pageNumber, 300, 300, PdfRenderFlags.CorrectFromDpi);
-                    
-                    using var memoryStream = new MemoryStream();
-                    image.Save(memoryStream, ImageFormat.Png);
-                    return memoryStream.ToArray();
-                });
+                return RenderPageToImage(filePath, pageNumber);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener imagen de la pÃ¡gina {PageNumber} del archivo {FilePath}", 
+                _logger.LogError(ex, "Error al obtener imagen de la pÃ¡gina {PageNumber} del archivo {FilePath}",
                     pageNumber, filePath);
                 return null;
             }
+        }
+
+        private byte[] RenderPageToImage(string filePath, int pageNumber)
+        {
+            using var document = PdfDocument.Load(filePath);
+            if (pageNumber < 0 || pageNumber >= document.PageCount)
+            {
+                _logger.LogError("NÃºmero de pÃ¡gina fuera de rango: {PageNumber}", pageNumber);
+                return null;
+            }
+
+            using var image = document.Render(pageNumber, 300, 300, true);
+            using var ms = new MemoryStream();
+            image.Save(ms, ImageFormat.Png);
+            return ms.ToArray();
         }
 
         public async Task<int> GetTotalPagesAsync(string filePath)

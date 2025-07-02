@@ -22,19 +22,26 @@ namespace PdfReaderService.Api.Services
             {
                 var whatsappEndpoint = _configuration["WhatsApp:SendImageEndpoint"];
                 var recipientNumber = _configuration["WhatsApp:RecipientNumber"];
+                var session = _configuration["WhatsApp:Session"] ?? "default";
 
                 var payload = new
                 {
-                    RecipientNumber = recipientNumber,
-                    Image = Convert.ToBase64String(imageData),
-                    Caption = caption
+                    chatId = recipientNumber,
+                    file = new
+                    {
+                        mimetype = "image/jpeg",
+                        filename = "imagen.jpg",
+                        url = "https://wow.zamimg.com/uploads/screenshots/small/629956.jpg"
+                    },
+                    caption = caption,
+                    session = session
                 };
 
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync(whatsappEndpoint, content);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     _logger.LogInformation("Imagen enviada correctamente por WhatsApp");
@@ -42,7 +49,8 @@ namespace PdfReaderService.Api.Services
                 }
                 else
                 {
-                    _logger.LogError("Error al enviar imagen por WhatsApp. Status: {StatusCode}", response.StatusCode);
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("Error al enviar imagen por WhatsApp. Status: {StatusCode}, Detalle: {Detalle}", response.StatusCode, error);
                     return false;
                 }
             }
@@ -59,18 +67,23 @@ namespace PdfReaderService.Api.Services
             {
                 var whatsappEndpoint = _configuration["WhatsApp:SendTextEndpoint"];
                 var recipientNumber = _configuration["WhatsApp:RecipientNumber"];
+                var session = _configuration["WhatsApp:Session"] ?? "default";
 
                 var payload = new
                 {
-                    RecipientNumber = recipientNumber,
-                    Message = message
+                    chatId = recipientNumber,
+                    reply_to = (string)null,
+                    text = message,
+                    linkPreview = true,
+                    linkPreviewHighQuality = false,
+                    session = session
                 };
 
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync(whatsappEndpoint, content);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     _logger.LogInformation("Mensaje de texto enviado correctamente por WhatsApp");

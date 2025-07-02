@@ -9,16 +9,19 @@ namespace PdfReaderService.Api.Services
         private readonly IPdfService _pdfService;
         private readonly IWhatsAppService _whatsAppService;
         private readonly ILogger<ReadingService> _logger;
+        private readonly IImageUploadService _imageUploadService;
 
         public ReadingService(
             IMongoDatabase database,
             IPdfService pdfService,
             IWhatsAppService whatsAppService,
+            IImageUploadService imageUploadService,
             ILogger<ReadingService> logger)
         {
             _readingStateCollection = database.GetCollection<ReadingState>("ReadingState");
             _pdfService = pdfService;
             _whatsAppService = whatsAppService;
+            _imageUploadService = imageUploadService;
             _logger = logger;
         }
 
@@ -39,22 +42,29 @@ namespace PdfReaderService.Api.Services
                     return false;
                 }
 
-                var pageImage = await _pdfService.GetPageImageAsync(readingState.FilePath, readingState.CurrentPage);
+                var pageImage = _pdfService.GetPageImageAsync(readingState.FilePath, (readingState.CurrentPage + readingState.StartPage));
                 if (pageImage == null)
                 {
                     _logger.LogError("No se pudo obtener la imagen de la pÃ¡gina {PageNumber}", readingState.CurrentPage);
                     return false;
                 }
 
-                var message = $"ðŸ“– PÃ¡gina {readingState.CurrentPage + 1} de tu lectura diaria";
-                var sent = await _whatsAppService.SendImageAsync(pageImage, message);
+                var url = await _imageUploadService.UploadImageAsync(pageImage);
+                if (url == null)
+                {
+                    _logger.LogError("No se pudo subir la imagen de la pÃ¡gina {PageNumber}", readingState.CurrentPage);
+                    return false;
+                }
+
+                var message = $"Acá tenés tu página del día Camila linda hermosa jadeputt. {url} \nPágina {readingState.CurrentPage + 1} de {readingState.EndPage - readingState.StartPage}";
+                var sent = await _whatsAppService.SendTextAsync(message);
 
                 if (sent)
                 {
                     readingState.CurrentPage++;
                     readingState.LastRunDateTime = DateTime.Now;
                     await UpdateReadingStateAsync(readingState);
-                    
+
                     _logger.LogInformation("PÃ¡gina {PageNumber} enviada correctamente", readingState.CurrentPage);
                     return true;
                 }
@@ -85,7 +95,7 @@ namespace PdfReaderService.Api.Services
                     return true;
                 }
 
-                var pageImage = await _pdfService.GetPageImageAsync(readingState.FilePath, readingState.CurrentPage);
+                var pageImage = _pdfService.GetPageImageAsync(readingState.FilePath, readingState.CurrentPage);
                 if (pageImage == null)
                 {
                     _logger.LogError("No se pudo obtener la imagen de la pÃ¡gina {PageNumber}", readingState.CurrentPage);
@@ -99,7 +109,7 @@ namespace PdfReaderService.Api.Services
                 {
                     readingState.CurrentPage++;
                     await UpdateReadingStateAsync(readingState);
-                    
+
                     _logger.LogInformation("PÃ¡gina extra {PageNumber} enviada correctamente", readingState.CurrentPage);
                     return true;
                 }
