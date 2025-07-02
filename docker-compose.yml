@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mafaldapi:
+    container_name: mafaldapi
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    volumes:
+      - C:\mafalda-completa.pdf:/app/mafalda-completa.pdf
+    ports:
+      - "5047:5047" # cambiamos el puerto del host para evitar colisión
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__MongoDB=mongodb://mafaldamongo:27017
+      - MongoDB__DatabaseName=PdfReaderDb
+      - WhatsApp__BaseUrl=http://waha:3000/api/
+      - WhatsApp__SendImageEndpoint=http://waha:3000/api/sendImage
+      - WhatsApp__SendTextEndpoint=http://waha:3000/api/sendText
+      - WhatsApp__RecipientNumber=5491164855652@c.us
+    depends_on:
+      - mafaldamongo
+    networks:
+      - waha-network
+    restart: always
+
+  mafaldamongo:
+    image: mongo
+    container_name: mafaldamongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - mafaldamongo-data:/data/db
+    networks:
+      - waha-network
+    restart: always
+
+volumes:
+  mafaldamongo-data:
+
+networks:
+  waha-network:
+    external: true
