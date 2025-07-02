@@ -14,7 +14,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__MongoDB=mongodb://mafaldamongo:27017
       - MongoDB__DatabaseName=PdfReaderDb
-      - WhatsApp__BaseUrl=http://waha:3000/api/
+      - WhatsApp__BaseUrl=http://waha:3000/api
       - WhatsApp__SendImageEndpoint=http://waha:3000/api/sendImage
       - WhatsApp__SendTextEndpoint=http://waha:3000/api/sendText
       - WhatsApp__RecipientNumber=5491164855652@c.us
