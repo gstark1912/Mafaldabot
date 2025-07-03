@@ -17,7 +17,7 @@ services:
       - WhatsApp__BaseUrl=http://waha:3000/api
       - WhatsApp__SendImageEndpoint=http://waha:3000/api/sendImage
       - WhatsApp__SendTextEndpoint=http://waha:3000/api/sendText
-      - WhatsApp__RecipientNumber=5491164855652@c.us
+      - WhatsApp__RecipientNumber=5491150360712@c.us
     depends_on:
       - mafaldamongo
     networks:

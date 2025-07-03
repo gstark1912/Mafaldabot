@@ -56,7 +56,7 @@ namespace PdfReaderService.Api.Services
                     return false;
                 }
 
-                var message = $"Acá tenés tu página del día Camila linda hermosa jadeputt. {url} \nPágina {readingState.CurrentPage + 1} de {readingState.EndPage - readingState.StartPage}";
+                var message = $"Buen día linda! Ya estoy programado para mandarte todas las mañanas algo.\nAcá tenés tu página del día: {url} \n\nTe amo pendeja\nBah yo no, yo en realidad soy un robot.\nAhora que lo pienso, no sé lo que es amar..\nBueno dejá, mañana charlamos.";
                 var sent = await _whatsAppService.SendTextAsync(message);
 
                 if (sent)
