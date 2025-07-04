@@ -69,6 +69,9 @@ namespace PdfReaderService.Api.Services
                 var recipientNumber = _configuration["WhatsApp:RecipientNumber"];
                 var session = _configuration["WhatsApp:Session"] ?? "default";
 
+                if (!await IsSessionStartedAsync())
+                    return false;
+                
                 var payload = new
                 {
                     chatId = recipientNumber,
@@ -101,5 +104,54 @@ namespace PdfReaderService.Api.Services
                 return false;
             }
         }
+        
+        public async Task<bool> IsSessionStartedAsync()
+        {
+            try
+            {
+                var baseUrl = _configuration["WhatsApp:BaseUrl"];
+                var sessionName = _configuration["WhatsApp:Session"] ?? "default";
+
+                var statusUrl = $"{baseUrl}/sessions/{sessionName}";
+                var startUrl = $"{statusUrl}/start";
+
+                var statusResponse = await _httpClient.GetAsync(statusUrl);
+                if (!statusResponse.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Error al consultar el estado de la sesión. Status: {StatusCode}", statusResponse.StatusCode);
+                    return false;
+                }
+
+                using var stream = await statusResponse.Content.ReadAsStreamAsync();
+                var json = await JsonDocument.ParseAsync(stream);
+                var status = json.RootElement.GetProperty("status").GetString();
+
+                if (status == "STOPPED")
+                {
+                    _logger.LogInformation("Sesión está detenida. Intentando iniciar...");
+
+                    var startResponse = await _httpClient.PostAsync(startUrl, new StringContent(""));
+                    if (startResponse.IsSuccessStatusCode)
+                    {
+                        _logger.LogInformation("Sesión iniciándose correctamente.");
+                        return true;
+                    }
+                    else
+                    {
+                        _logger.LogError("Error al iniciar la sesión. Status: {StatusCode}", startResponse.StatusCode);
+                        return false;
+                    }
+                }
+
+                _logger.LogInformation("Sesión ya está activa. Estado: {Status}", status);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Excepción al verificar o iniciar la sesión de WhatsApp");
+                return false;
+            }
+        }
+
     }
 }
