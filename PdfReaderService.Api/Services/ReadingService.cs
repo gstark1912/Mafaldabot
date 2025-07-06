@@ -6,6 +6,7 @@ namespace PdfReaderService.Api.Services
     public class ReadingService : IReadingService
     {
         private readonly IMongoCollection<ReadingState> _readingStateCollection;
+        private readonly IMongoCollection<Fact> _factsCollection;
         private readonly IPdfService _pdfService;
         private readonly IWhatsAppService _whatsAppService;
         private readonly ILogger<ReadingService> _logger;
@@ -19,6 +20,7 @@ namespace PdfReaderService.Api.Services
             ILogger<ReadingService> logger)
         {
             _readingStateCollection = database.GetCollection<ReadingState>("ReadingState");
+            _factsCollection = database.GetCollection<Fact>("Facts");
             _pdfService = pdfService;
             _whatsAppService = whatsAppService;
             _imageUploadService = imageUploadService;
@@ -56,7 +58,7 @@ namespace PdfReaderService.Api.Services
                     return false;
                 }
 
-                var message = $"Buen día linda! Ya estoy programado para mandarte todas las mañanas algo.\nAcá tenés tu página del día: {url} \n\nTe amo pendeja\nBah yo no, yo en realidad soy un robot.\nAhora que lo pienso, no sé lo que es amar..\nBueno dejá, mañana charlamos.";
+                var message = await GetMessage(url);
                 var sent = await _whatsAppService.SendTextAsync(message);
 
                 if (sent)
@@ -78,6 +80,25 @@ namespace PdfReaderService.Api.Services
             }
         }
 
+        private async Task<string> GetMessage(string url)
+        {
+            var totalFacts = await _factsCollection.CountDocumentsAsync(_ => true);
+
+            var dayOfYear = DateTime.UtcNow.DayOfYear;
+            var factIndex = dayOfYear % 600;
+
+            var fact = await _factsCollection
+                .Find(FilterDefinition<Fact>.Empty)
+                .Skip(factIndex)
+                .Limit(1)
+                .FirstOrDefaultAsync();
+
+            return $"Buen día linda! \n" +
+            $"Acá tenés tu página del día: {url} \n\n" +
+            "Sobre Mafalda:\n\n" +
+            $"{fact.Category} → {fact.Text}\n\n";
+        }
+
         public async Task<bool> SendNextPageAsync()
         {
             try
@@ -91,7 +112,7 @@ namespace PdfReaderService.Api.Services
 
                 if (readingState.CurrentPage > readingState.EndPage)
                 {
-                    await _whatsAppService.SendTextAsync("ðŸ“š Â¡Has completado toda la lectura! ðŸŽ‰");
+                    await _whatsAppService.SendTextAsync("¡Has completado toda la lectura!");
                     return true;
                 }
 

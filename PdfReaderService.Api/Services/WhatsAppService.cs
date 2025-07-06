@@ -71,7 +71,7 @@ namespace PdfReaderService.Api.Services
 
                 if (!await IsSessionStartedAsync())
                     return false;
-                
+
                 var payload = new
                 {
                     chatId = recipientNumber,
@@ -104,7 +104,7 @@ namespace PdfReaderService.Api.Services
                 return false;
             }
         }
-        
+
         public async Task<bool> IsSessionStartedAsync()
         {
             try
